@@ -52,6 +52,8 @@ defmodule CrucibleTelemetry.MixProject do
       homepage_url: @source_url,
       extras: extras(),
       groups_for_extras: groups_for_extras(),
+      assets: %{"assets" => "assets"},
+      logo: "assets/crucible_telemetry.svg",
       before_closing_head_tag: &mermaid_config/1
     ]
   end
