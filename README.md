@@ -4,7 +4,7 @@
 
 # CrucibleTelemetry
 
-Research-grade instrumentation and metrics collection for AI/ML experiments in Elixir.
+**Research-grade instrumentation and metrics collection for AI/ML experiments in Elixir.**
 
 ## Overview
 
@@ -448,5 +448,5 @@ TelemetryResearch is designed for minimal overhead:
 
 ## License
 
-Copyright © 2024 Spectra AI Research
+MIT License - see [LICENSE](https://github.com/North-Shore-AI/crucible_telemetry/blob/main/LICENSE) file for details
 
