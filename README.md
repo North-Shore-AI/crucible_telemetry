@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/crucible_telemetry.svg" alt="Telemetry" width="150"/>
+</p>
+
 # CrucibleTelemetry
 
 Research-grade instrumentation and metrics collection for AI/ML experiments in Elixir.
