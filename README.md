@@ -4,6 +4,12 @@
 
 # CrucibleTelemetry
 
+[![Elixir](https://img.shields.io/badge/elixir-1.18.4-purple.svg)](https://elixir-lang.org)
+[![OTP](https://img.shields.io/badge/otp-28-blue.svg)](https://www.erlang.org)
+[![Hex.pm](https://img.shields.io/hexpm/v/crucible_telemetry.svg)](https://hex.pm/packages/crucible_telemetry)
+[![Documentation](https://img.shields.io/badge/docs-hexdocs-purple.svg)](https://hexdocs.pm/crucible_telemetry)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/North-Shore-AI/crucible_telemetry/blob/main/LICENSE)
+
 **Research-grade instrumentation and metrics collection for AI/ML experiments in Elixir.**
 
 ## Overview
