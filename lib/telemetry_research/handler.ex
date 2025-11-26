@@ -6,7 +6,7 @@ defmodule CrucibleTelemetry.Handler do
   and stores them for later analysis.
   """
 
-  alias CrucibleTelemetry.Store
+  alias CrucibleTelemetry.{Store, StreamingMetrics}
 
   @doc """
   Main event handler attached to telemetry events.
@@ -25,6 +25,9 @@ defmodule CrucibleTelemetry.Handler do
 
       # Store the event
       Store.insert(experiment.id, enriched)
+
+      # Update streaming metrics (no-op if server not running)
+      StreamingMetrics.update(experiment.id, enriched)
     end
 
     :ok

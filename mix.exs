@@ -1,7 +1,7 @@
 defmodule CrucibleTelemetry.MixProject do
   use Mix.Project
 
-  @version "0.1.0"
+  @version "0.2.0"
   @source_url "https://github.com/North-Shore-AI/crucible_telemetry"
 
   def project do
@@ -11,6 +11,7 @@ defmodule CrucibleTelemetry.MixProject do
       elixir: "~> 1.14",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
+      dialyzer: dialyzer(),
       docs: docs(),
       description: description(),
       package: package(),
@@ -31,6 +32,9 @@ defmodule CrucibleTelemetry.MixProject do
     [
       {:jason, "~> 1.4"},
       {:telemetry, "~> 1.3"},
+
+      # Static analysis
+      {:dialyxir, "~> 1.4", only: :dev, runtime: false},
 
       # Documentation
       {:ex_doc, "~> 0.38", only: :dev, runtime: false}
@@ -55,6 +59,13 @@ defmodule CrucibleTelemetry.MixProject do
       assets: %{"assets" => "assets"},
       logo: "assets/crucible_telemetry.svg",
       before_closing_head_tag: &mermaid_config/1
+    ]
+  end
+
+  defp dialyzer do
+    [
+      plt_add_deps: :app_tree,
+      plt_add_apps: [:mix]
     ]
   end
 

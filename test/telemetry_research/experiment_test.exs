@@ -57,6 +57,12 @@ defmodule CrucibleTelemetry.ExperimentTest do
       assert info != :undefined
       assert info[:type] == :ordered_set
     end
+
+    test "auto-starts streaming metrics" do
+      {:ok, experiment} = Experiment.start(name: "streaming_autostart_test")
+
+      assert Process.whereis(:"streaming_metrics_#{experiment.id}") != nil
+    end
   end
 
   describe "stop/1" do
@@ -148,6 +154,19 @@ defmodule CrucibleTelemetry.ExperimentTest do
 
       # Clean up
       :ets.delete(table_name)
+    end
+
+    test "detaches telemetry handlers and stops streaming metrics" do
+      {:ok, experiment} = Experiment.start(name: "cleanup_handlers_test")
+
+      handler_id = "research_#{experiment.id}"
+      assert Enum.any?(:telemetry.list_handlers([]), &(&1.id == handler_id))
+      assert Process.whereis(:"streaming_metrics_#{experiment.id}") != nil
+
+      :ok = Experiment.cleanup(experiment.id)
+
+      refute Enum.any?(:telemetry.list_handlers([]), &(&1.id == handler_id))
+      assert Process.whereis(:"streaming_metrics_#{experiment.id}") == nil
     end
   end
 end

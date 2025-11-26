@@ -15,10 +15,12 @@ defmodule CrucibleTelemetry.Experiment do
     :tags,
     :started_at,
     :stopped_at,
+    :paused_at,
     :status,
     :sample_size,
     :metrics_config,
-    :storage_backend
+    :storage_backend,
+    pause_count: 0
   ]
 
   @type t :: %__MODULE__{
@@ -30,13 +32,16 @@ defmodule CrucibleTelemetry.Experiment do
           tags: list(String.t()),
           started_at: DateTime.t(),
           stopped_at: DateTime.t() | nil,
-          status: :running | :stopped | :archived,
+          paused_at: DateTime.t() | nil,
+          status: :running | :paused | :stopped | :archived,
           sample_size: integer() | nil,
           metrics_config: map(),
-          storage_backend: atom()
+          storage_backend: atom(),
+          pause_count: non_neg_integer()
         }
 
   alias CrucibleTelemetry.{Store, Handler}
+  alias CrucibleTelemetry.StreamingMetrics
 
   @doc """
   Start a new experiment.
@@ -72,10 +77,12 @@ defmodule CrucibleTelemetry.Experiment do
       tags: Keyword.get(opts, :tags, []),
       started_at: DateTime.utc_now(),
       stopped_at: nil,
+      paused_at: nil,
       status: :running,
       sample_size: Keyword.get(opts, :sample_size),
       metrics_config: Keyword.get(opts, :metrics_config, default_metrics()),
-      storage_backend: Keyword.get(opts, :storage_backend, :ets)
+      storage_backend: Keyword.get(opts, :storage_backend, :ets),
+      pause_count: 0
     }
 
     # Create isolated storage
@@ -86,6 +93,9 @@ defmodule CrucibleTelemetry.Experiment do
 
     # Register experiment
     :ets.insert(:crucible_telemetry_experiments, {experiment.id, experiment})
+
+    # Start streaming metrics server
+    ensure_streaming_metrics(experiment.id)
 
     {:ok, experiment}
   end
@@ -109,6 +119,110 @@ defmodule CrucibleTelemetry.Experiment do
 
       error ->
         error
+    end
+  end
+
+  @doc """
+  Pause an experiment, temporarily stopping data collection.
+
+  Handlers are detached but storage remains intact. The experiment
+  can be resumed later with `resume/1`.
+
+  ## Examples
+
+      {:ok, paused} = Experiment.pause(experiment_id)
+      # ... do something else ...
+      {:ok, resumed} = Experiment.resume(experiment_id)
+  """
+  def pause(experiment_id) do
+    case get(experiment_id) do
+      {:ok, experiment} ->
+        case experiment.status do
+          :running ->
+            # Detach handlers
+            detach_handlers(experiment)
+
+            # Update status
+            updated = %{
+              experiment
+              | status: :paused,
+                paused_at: DateTime.utc_now(),
+                pause_count: experiment.pause_count + 1
+            }
+
+            # Update in registry
+            :ets.insert(:crucible_telemetry_experiments, {experiment_id, updated})
+
+            {:ok, updated}
+
+          :paused ->
+            {:error, :already_paused}
+
+          _ ->
+            {:error, :not_running}
+        end
+
+      error ->
+        error
+    end
+  end
+
+  @doc """
+  Resume a paused experiment.
+
+  Reattaches telemetry handlers and resumes data collection.
+
+  ## Examples
+
+      {:ok, resumed} = Experiment.resume(experiment_id)
+  """
+  def resume(experiment_id) do
+    case get(experiment_id) do
+      {:ok, experiment} ->
+        case experiment.status do
+          :paused ->
+            # Reattach handlers
+            attach_handlers(experiment)
+
+            # Ensure streaming metrics server is running
+            ensure_streaming_metrics(experiment.id)
+
+            # Update status
+            updated = %{
+              experiment
+              | status: :running,
+                paused_at: nil
+            }
+
+            # Update in registry
+            :ets.insert(:crucible_telemetry_experiments, {experiment_id, updated})
+
+            {:ok, updated}
+
+          _ ->
+            {:error, :not_paused}
+        end
+
+      error ->
+        error
+    end
+  end
+
+  @doc """
+  Check if an experiment is currently paused.
+
+  Returns `true` if paused, `false` otherwise.
+
+  ## Examples
+
+      if Experiment.is_paused?(experiment_id) do
+        IO.puts("Experiment is paused")
+      end
+  """
+  def is_paused?(experiment_id) do
+    case get(experiment_id) do
+      {:ok, experiment} -> experiment.status == :paused
+      {:error, _} -> false
     end
   end
 
@@ -159,6 +273,14 @@ defmodule CrucibleTelemetry.Experiment do
   def cleanup(experiment_id, opts \\ []) do
     keep_data = Keyword.get(opts, :keep_data, false)
 
+    # Detach handlers if they are still attached
+    with {:ok, experiment} <- get(experiment_id) do
+      detach_handlers(experiment)
+    end
+
+    # Stop streaming metrics server if running
+    StreamingMetrics.stop(experiment_id)
+
     unless keep_data do
       Store.delete_experiment(experiment_id)
     end
@@ -199,6 +321,14 @@ defmodule CrucibleTelemetry.Experiment do
   end
 
   defp handler_id(experiment), do: "research_#{experiment.id}"
+
+  defp ensure_streaming_metrics(experiment_id) do
+    case StreamingMetrics.start(experiment_id) do
+      {:ok, _pid} -> :ok
+      {:error, {:already_started, _pid}} -> :ok
+      {:error, _} -> :ok
+    end
+  end
 
   defp generate_id do
     # Generate a short UUID-like ID

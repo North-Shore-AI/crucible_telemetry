@@ -111,4 +111,26 @@ defmodule CrucibleTelemetry do
   def calculate_metrics(experiment_id) do
     CrucibleTelemetry.Analysis.calculate_metrics(experiment_id)
   end
+
+  @doc """
+  Pause an experiment, temporarily stopping data collection.
+
+  Handlers are detached but storage remains intact. The experiment
+  can be resumed later with `resume_experiment/1`.
+  """
+  defdelegate pause_experiment(experiment_id), to: Experiment, as: :pause
+
+  @doc """
+  Resume a paused experiment.
+
+  Reattaches telemetry handlers and resumes data collection.
+  """
+  defdelegate resume_experiment(experiment_id), to: Experiment, as: :resume
+
+  @doc """
+  Check if an experiment is currently paused.
+
+  Returns `true` if paused, `false` otherwise.
+  """
+  defdelegate is_paused?(experiment_id), to: Experiment
 end

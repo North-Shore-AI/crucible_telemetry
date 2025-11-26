@@ -21,6 +21,9 @@
 - **Multiple Export Formats**: CSV, JSON Lines for analysis in Python, R, Julia, Excel
 - **Complete Event Capture**: No sampling by default - full reproducibility
 - **Statistical Analysis**: Built-in descriptive statistics and metrics calculations
+- **Real-time Streaming Metrics**: Live latency/cost/reliability stats with O(1) memory
+- **Time-Window Queries**: Fetch last N events or ranges without full rescans
+- **Pause/Resume Lifecycle**: Temporarily halt collection without losing state
 - **Zero-Cost Abstraction**: Minimal overhead when not actively collecting data
 
 ## Why TelemetryResearch?
@@ -42,7 +45,7 @@ Add `telemetry_research` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:crucible_telemetry, "~> 0.1.0"}
+    {:crucible_telemetry, "~> 0.2.0"}
   ]
 end
 ```
@@ -204,6 +207,60 @@ Export data for analysis in your preferred tool:
 # Then with jq:
 # cat results/experiment.jsonl | jq '.latency_ms' | jq -s 'add/length'
 ```
+
+### Real-Time Streaming Metrics
+
+Streaming metrics are auto-started when an experiment begins and update on every collected event. You can query or reset them at any time without waiting for the experiment to stop:
+
+```elixir
+# Grab live metrics (mean/min/max/std for latency & cost, success rate, event counts)
+metrics = CrucibleTelemetry.StreamingMetrics.get_metrics(experiment.id)
+
+# Reset the streaming accumulators
+:ok = CrucibleTelemetry.StreamingMetrics.reset(experiment.id)
+
+# Stop streaming metrics explicitly (cleanup/stop also stops it)
+:ok = CrucibleTelemetry.StreamingMetrics.stop(experiment.id)
+```
+
+Streaming metrics use Welford’s online algorithm for exact mean/variance with constant memory. If the server is not running, `get_metrics/1` will start it automatically.
+
+### Time-Window Queries & Windowed Metrics
+
+Use `CrucibleTelemetry.Store.query_window/3` to pull only the data you need:
+
+```elixir
+# Last 5 minutes
+recent = Store.query_window(experiment.id, {:last, 5, :minutes})
+
+# Last 200 events
+tail = Store.query_window(experiment.id, {:last_n, 200})
+
+# Specific time range with an additional filter
+events = Store.query_window(experiment.id, {:range, t_start, t_end}, fn e -> e.success end)
+```
+
+Compute sliding window rollups with `windowed_metrics/3` (window and step in microseconds):
+
+```elixir
+# 5-minute windows stepping every 1 minute
+windows = Store.windowed_metrics(experiment.id, 5 * 60_000_000, 60_000_000)
+# => [%{window_start: ..., window_end: ..., event_count: 42, mean_latency: 123.4, total_cost: 0.12, ...}, ...]
+```
+
+### Pause and Resume Experiments
+
+You can temporarily pause data collection without tearing down storage:
+
+```elixir
+{:ok, paused} = CrucibleTelemetry.pause_experiment(experiment.id)
+# ... perform maintenance or hold traffic ...
+{:ok, resumed} = CrucibleTelemetry.resume_experiment(experiment.id)
+
+CrucibleTelemetry.is_paused?(experiment.id) # => true/false
+```
+
+Pausing detaches telemetry handlers; resuming reattaches them and keeps your experiment state and data intact.
 
 ## Use Cases
 
@@ -455,4 +512,3 @@ TelemetryResearch is designed for minimal overhead:
 ## License
 
 MIT License - see [LICENSE](https://github.com/North-Shore-AI/crucible_telemetry/blob/main/LICENSE) file for details
-
