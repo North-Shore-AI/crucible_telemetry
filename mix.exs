@@ -1,7 +1,7 @@
 defmodule CrucibleTelemetry.MixProject do
   use Mix.Project
 
-  @version "0.2.0"
+  @version "0.2.1"
   @source_url "https://github.com/North-Shore-AI/crucible_telemetry"
 
   def project do
@@ -30,6 +30,7 @@ defmodule CrucibleTelemetry.MixProject do
 
   defp deps do
     [
+      {:crucible_ir, "~> 0.1.1"},
       {:jason, "~> 1.4"},
       {:telemetry, "~> 1.3"},
 
