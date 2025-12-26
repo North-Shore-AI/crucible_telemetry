@@ -1,7 +1,7 @@
 defmodule CrucibleTelemetry.AnalysisTest do
   use ExUnit.Case, async: false
 
-  alias CrucibleTelemetry.{Experiment, Store, Analysis}
+  alias CrucibleTelemetry.{Analysis, Experiment, Store}
 
   setup do
     :ets.delete_all_objects(:crucible_telemetry_experiments)
@@ -116,8 +116,8 @@ defmodule CrucibleTelemetry.AnalysisTest do
       # 10 events with tokens: (100, 200, 300), (200, 400, 600), ..., (1000, 2000, 3000)
       assert metrics.tokens.count == 10
       assert metrics.tokens.total_prompt == 5500
-      assert metrics.tokens.total_completion == 11000
-      assert metrics.tokens.total == 16500
+      assert metrics.tokens.total_completion == 11_000
+      assert metrics.tokens.total == 16_500
       assert metrics.tokens.mean_prompt == 550.0
       assert metrics.tokens.mean_completion == 1100.0
       assert metrics.tokens.mean_total == 1650.0

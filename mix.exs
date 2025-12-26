@@ -1,7 +1,7 @@
 defmodule CrucibleTelemetry.MixProject do
   use Mix.Project
 
-  @version "0.2.1"
+  @version "0.3.0"
   @source_url "https://github.com/North-Shore-AI/crucible_telemetry"
 
   def project do
@@ -30,12 +30,13 @@ defmodule CrucibleTelemetry.MixProject do
 
   defp deps do
     [
-      {:crucible_ir, "~> 0.1.1"},
+      {:crucible_ir, "~> 0.2.0"},
       {:jason, "~> 1.4"},
       {:telemetry, "~> 1.3"},
 
       # Static analysis
       {:dialyxir, "~> 1.4", only: :dev, runtime: false},
+      {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
 
       # Documentation
       {:ex_doc, "~> 0.38", only: :dev, runtime: false}
@@ -73,7 +74,8 @@ defmodule CrucibleTelemetry.MixProject do
   defp extras do
     [
       "README.md",
-      "CHANGELOG.md"
+      "CHANGELOG.md",
+      "LICENSE"
     ]
   end
 

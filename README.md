@@ -1,61 +1,38 @@
 <p align="center">
-  <img src="assets/crucible_telemetry.svg" alt="Telemetry" width="150"/>
+  <img src="assets/crucible_telemetry.svg" alt="CrucibleTelemetry" width="150"/>
 </p>
 
 # CrucibleTelemetry
 
-[![Elixir](https://img.shields.io/badge/elixir-1.18.4-purple.svg)](https://elixir-lang.org)
-[![OTP](https://img.shields.io/badge/otp-28-blue.svg)](https://www.erlang.org)
 [![Hex.pm](https://img.shields.io/hexpm/v/crucible_telemetry.svg)](https://hex.pm/packages/crucible_telemetry)
+[![Elixir](https://img.shields.io/badge/elixir-1.18+-purple.svg)](https://elixir-lang.org)
+[![OTP](https://img.shields.io/badge/otp-28+-blue.svg)](https://www.erlang.org)
 [![Documentation](https://img.shields.io/badge/docs-hexdocs-purple.svg)](https://hexdocs.pm/crucible_telemetry)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/North-Shore-AI/crucible_telemetry/blob/main/LICENSE)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-**Research-grade instrumentation and metrics collection for AI/ML experiments in Elixir.**
+> **Research-grade instrumentation and metrics collection for AI/ML experiments in Elixir.**
 
-## Overview
+CrucibleTelemetry provides specialized observability for rigorous scientific experimentation, going beyond standard production telemetry with features designed for AI/ML research workflows.
 
-**TelemetryResearch** provides specialized observability for rigorous scientific experimentation, going beyond standard production telemetry with features designed for AI/ML research:
+## Features
 
-- **Experiment Isolation**: Run multiple experiments concurrently without cross-contamination
-- **Rich Metadata**: Automatic enrichment with experiment context, timestamps, and custom tags
-- **Multiple Export Formats**: CSV, JSON Lines for analysis in Python, R, Julia, Excel
-- **Complete Event Capture**: No sampling by default - full reproducibility
-- **Statistical Analysis**: Built-in descriptive statistics and metrics calculations
-- **Real-time Streaming Metrics**: Live latency/cost/reliability stats with O(1) memory
-- **Time-Window Queries**: Fetch last N events or ranges without full rescans
-- **Pause/Resume Lifecycle**: Temporarily halt collection without losing state
-- **Zero-Cost Abstraction**: Minimal overhead when not actively collecting data
-
-## Why TelemetryResearch?
-
-Standard production telemetry libraries focus on monitoring and alerting, but research experiments have different requirements:
-
-| Production Telemetry | Research Telemetry (this library) |
-|---------------------|-----------------------------------|
-| Real-time dashboards | Statistical analysis and exports |
-| Sampling for efficiency | Complete capture for reproducibility |
-| Fixed metrics | Rich, experiment-specific metadata |
-| Single workload tracking | Multiple concurrent experiments |
-| JSON/logs output | CSV, JSON Lines, Parquet for analysis tools |
+- **Experiment Isolation** — Run multiple experiments concurrently without cross-contamination
+- **Centralized Event Registry** — Programmatic access to all telemetry event definitions
+- **Rich Metadata Enrichment** — Automatic context, timestamps, and custom tags
+- **ML Training Support** — Track epochs, batches, checkpoints, and training metrics
+- **Inference Monitoring** — Model deployment and inference telemetry
+- **Pipeline Tracking** — Framework stage execution observability
+- **Streaming Metrics** — Real-time latency/cost/reliability stats with O(1) memory
+- **Time-Window Queries** — Fetch last N events or ranges without full rescans
+- **Multiple Export Formats** — CSV, JSON Lines for Python, R, Julia, Excel
+- **Pause/Resume Lifecycle** — Temporarily halt collection without losing state
 
 ## Installation
 
-Add `telemetry_research` to your list of dependencies in `mix.exs`:
-
 ```elixir
 def deps do
   [
-    {:crucible_telemetry, "~> 0.2.0"}
-  ]
-end
-```
-
-Or install from GitHub:
-
-```elixir
-def deps do
-  [
-    {:crucible_telemetry, github: "nshkrdotcom/elixir_ai_research", sparse: "apps/telemetry_research"}
+    {:crucible_telemetry, "~> 0.3.0"}
   ]
 end
 ```
@@ -63,220 +40,228 @@ end
 ## Quick Start
 
 ```elixir
-# 1. Start an experiment
+# Start an experiment
 {:ok, experiment} = CrucibleTelemetry.start_experiment(
-  name: "ensemble_vs_single",
-  hypothesis: "5-model ensemble achieves >99% reliability",
-  condition: "treatment",
-  tags: ["accuracy", "reliability"]
+  name: "bert_finetuning",
+  hypothesis: "Fine-tuned BERT achieves >95% accuracy",
+  tags: ["training", "bert", "nlp"]
 )
 
-# 2. Run your AI workload - events are automatically collected
-# Your existing code with :telemetry.execute() calls works unchanged
+# Events are automatically collected via telemetry
+# Your existing :telemetry.execute() calls work unchanged
 
-# 3. Stop and analyze
-{:ok, experiment} = CrucibleTelemetry.stop_experiment(experiment.id)
+# Stop and analyze
+{:ok, _} = CrucibleTelemetry.stop_experiment(experiment.id)
 
 metrics = CrucibleTelemetry.calculate_metrics(experiment.id)
-# => %{
-#   latency: %{mean: 150.5, p95: 250.0, ...},
-#   cost: %{total: 0.025, mean_per_request: 0.0025, ...},
-#   reliability: %{success_rate: 0.99, ...}
-# }
+# => %{latency: %{mean: 150.5, p95: 250.0}, cost: %{total: 0.025}, ...}
 
-# 4. Export for analysis
+# Export for analysis
 {:ok, path} = CrucibleTelemetry.export(experiment.id, :csv)
-# Now analyze in Python: pd.read_csv(path)
 ```
 
-## Core Concepts
+## Event Registry
 
-### Experiments
-
-An **experiment** is an isolated collection session with its own:
-- Unique ID and metadata
-- Dedicated storage (ETS table)
-- Telemetry event handlers
-- Tags and conditions for comparison
+CrucibleTelemetry provides a centralized registry of all supported telemetry events:
 
 ```elixir
-{:ok, experiment} = CrucibleTelemetry.start_experiment(
-  name: "gpt4_baseline",
-  hypothesis: "Single GPT-4 achieves 90% accuracy on benchmark",
-  condition: "control",
-  tags: ["h1", "baseline", "gpt4"],
-  sample_size: 1000,
-  metadata: %{
-    researcher: "alice",
-    benchmark: "mmlu",
-    version: "v1"
-  }
-)
+# Get all standard events
+CrucibleTelemetry.Events.standard_events()
+
+# Get events by category
+CrucibleTelemetry.Events.training_events()
+CrucibleTelemetry.Events.deployment_events()
+CrucibleTelemetry.Events.framework_events()
+CrucibleTelemetry.Events.llm_events()
+
+# Get events organized by category
+CrucibleTelemetry.Events.events_by_category()
+# => %{llm: [...], training: [...], deployment: [...], ...}
+
+# Get info about a specific event
+CrucibleTelemetry.Events.event_info([:crucible_train, :epoch, :stop])
+# => %{category: :training, description: "Epoch completed with metrics"}
 ```
 
-### Event Collection
+## Telemetry Events
 
-TelemetryResearch automatically attaches to standard telemetry events:
+### LLM Events (req_llm)
 
-- `[:req_llm, :request, :start|stop|exception]` - LLM API calls
-- `[:ensemble, :prediction, :start|stop]` - Ensemble predictions
-- `[:ensemble, :vote, :completed]` - Voting results
-- `[:hedging, :request, :*]` - Request hedging events
-- `[:causal_trace, :event, :created]` - Reasoning traces
-- `[:altar, :tool, :*]` - Tool invocations
+| Event | Description |
+|-------|-------------|
+| `[:req_llm, :request, :start]` | LLM request started |
+| `[:req_llm, :request, :stop]` | LLM request completed |
+| `[:req_llm, :request, :exception]` | LLM request failed |
 
-Events are enriched with:
-- Experiment context (ID, name, condition, tags)
-- Computed metrics (latency, cost, success)
-- Timestamps (microsecond precision)
-- Custom metadata
+### Training Events (crucible_train)
 
-### Storage
+| Event | Description | Enriched Fields |
+|-------|-------------|-----------------|
+| `[:crucible_train, :training, :start]` | Training job started | — |
+| `[:crucible_train, :training, :stop]` | Training job completed | — |
+| `[:crucible_train, :epoch, :start]` | Epoch started | `epoch` |
+| `[:crucible_train, :epoch, :stop]` | Epoch completed | `epoch`, `loss`, `accuracy`, `learning_rate` |
+| `[:crucible_train, :batch, :stop]` | Batch completed | `epoch`, `batch`, `loss`, `gradient_norm` |
+| `[:crucible_train, :checkpoint, :saved]` | Checkpoint saved | `epoch`, `checkpoint_path` |
 
-Events are stored in **ETS tables** for fast in-memory access:
+### Deployment Events (crucible_deployment)
+
+| Event | Description | Enriched Fields |
+|-------|-------------|-----------------|
+| `[:crucible_deployment, :inference, :start]` | Inference started | `model_name`, `model_version` |
+| `[:crucible_deployment, :inference, :stop]` | Inference completed | `input_size`, `output_size`, `batch_size` |
+| `[:crucible_deployment, :inference, :exception]` | Inference failed | — |
+
+### Framework Events (crucible_framework)
+
+| Event | Description | Enriched Fields |
+|-------|-------------|-----------------|
+| `[:crucible_framework, :pipeline, :start]` | Pipeline started | `pipeline_id` |
+| `[:crucible_framework, :pipeline, :stop]` | Pipeline completed | `pipeline_id` |
+| `[:crucible_framework, :stage, :start]` | Stage started | `stage_name`, `stage_index` |
+| `[:crucible_framework, :stage, :stop]` | Stage completed | `stage_name`, `stage_index` |
+
+### Other Events
+
+- `[:ensemble, :prediction, :start|stop]` — Ensemble predictions
+- `[:ensemble, :vote, :completed]` — Voting results
+- `[:hedging, :request, :start|duplicated|stop]` — Request hedging
+- `[:causal_trace, :event, :created]` — Reasoning traces
+- `[:altar, :tool, :start|stop]` — Tool invocations
+
+## Training Integration
+
+Track ML training jobs by emitting standard training events:
 
 ```elixir
-# Query events by filters
-events = CrucibleTelemetry.Store.query(experiment.id, %{
-  event_name: [:req_llm, :request, :stop],
-  success: true,
-  time_range: {start_time, end_time}
-})
+defmodule MyTrainer do
+  def train(model, data, epochs) do
+    :telemetry.execute(
+      [:crucible_train, :training, :start],
+      %{system_time: System.system_time()},
+      %{model_name: "bert-base", config: %{epochs: epochs}}
+    )
+
+    for epoch <- 1..epochs do
+      :telemetry.execute(
+        [:crucible_train, :epoch, :start],
+        %{system_time: System.system_time()},
+        %{epoch: epoch}
+      )
+
+      {loss, accuracy} = train_epoch(model, data)
+
+      :telemetry.execute(
+        [:crucible_train, :epoch, :stop],
+        %{duration: epoch_duration, loss: loss, accuracy: accuracy},
+        %{epoch: epoch, learning_rate: get_lr()}
+      )
+    end
+
+    :telemetry.execute(
+      [:crucible_train, :training, :stop],
+      %{duration: total_duration},
+      %{final_loss: final_loss}
+    )
+  end
+end
 ```
 
-ETS storage is ideal for experiments with <1M events. For longer experiments or persistent storage, PostgreSQL backend support is planned.
-
-### Metrics & Analysis
-
-Calculate comprehensive metrics automatically:
+## Metrics & Analysis
 
 ```elixir
 metrics = CrucibleTelemetry.calculate_metrics(experiment.id)
 
-# Latency metrics
-metrics.latency.mean      # Average latency
-metrics.latency.median    # Median latency
-metrics.latency.p50       # 50th percentile
-metrics.latency.p95       # 95th percentile
-metrics.latency.p99       # 99th percentile
-metrics.latency.std_dev   # Standard deviation
+# Latency
+metrics.latency.mean       # Average latency
+metrics.latency.p95        # 95th percentile
+metrics.latency.p99        # 99th percentile
 
-# Cost metrics
+# Cost
 metrics.cost.total                  # Total cost in USD
-metrics.cost.mean_per_request       # Average cost per request
-metrics.cost.cost_per_1k_requests   # Projected cost for 1K requests
 metrics.cost.cost_per_1m_requests   # Projected cost for 1M requests
 
-# Reliability metrics
+# Reliability
 metrics.reliability.success_rate    # Success rate (0.0-1.0)
-metrics.reliability.successful      # Count of successful requests
-metrics.reliability.failed          # Count of failed requests
 metrics.reliability.sla_99          # Meets 99% SLA?
-metrics.reliability.sla_999         # Meets 99.9% SLA?
 
-# Token metrics (if available)
+# Tokens
 metrics.tokens.total_prompt         # Total prompt tokens
-metrics.tokens.total_completion     # Total completion tokens
 metrics.tokens.mean_total           # Average tokens per request
 ```
 
-### Export Formats
+## Streaming Metrics
 
-Export data for analysis in your preferred tool:
+Real-time metrics update on every collected event:
 
-#### CSV (Excel, pandas, R)
+```elixir
+# Get live metrics
+metrics = CrucibleTelemetry.StreamingMetrics.get_metrics(experiment.id)
+
+# Reset accumulators
+CrucibleTelemetry.StreamingMetrics.reset(experiment.id)
+
+# Stop streaming
+CrucibleTelemetry.StreamingMetrics.stop(experiment.id)
+```
+
+## Time-Window Queries
+
+```elixir
+alias CrucibleTelemetry.Store
+
+# Last 5 minutes
+Store.query_window(experiment.id, {:last, 5, :minutes})
+
+# Last 200 events
+Store.query_window(experiment.id, {:last_n, 200})
+
+# Specific time range with filter
+Store.query_window(experiment.id, {:range, t_start, t_end}, &(&1.success))
+
+# Sliding window metrics (5-min windows, 1-min step)
+Store.windowed_metrics(experiment.id, 5 * 60_000_000, 60_000_000)
+```
+
+## Pause & Resume
+
+```elixir
+{:ok, paused} = CrucibleTelemetry.pause_experiment(experiment.id)
+# ... maintenance ...
+{:ok, resumed} = CrucibleTelemetry.resume_experiment(experiment.id)
+
+CrucibleTelemetry.paused?(experiment.id)  # => true/false
+```
+
+## Export Formats
+
+### CSV
 
 ```elixir
 {:ok, path} = CrucibleTelemetry.export(experiment.id, :csv,
   path: "results/experiment.csv"
 )
-
-# Then in Python:
-# import pandas as pd
-# df = pd.read_csv("results/experiment.csv")
-# df.groupby('condition')['latency_ms'].describe()
 ```
 
-#### JSON Lines (streaming, jq)
+### JSON Lines
 
 ```elixir
 {:ok, path} = CrucibleTelemetry.export(experiment.id, :jsonl,
   path: "results/experiment.jsonl"
 )
-
-# Then with jq:
-# cat results/experiment.jsonl | jq '.latency_ms' | jq -s 'add/length'
 ```
 
-### Real-Time Streaming Metrics
-
-Streaming metrics are auto-started when an experiment begins and update on every collected event. You can query or reset them at any time without waiting for the experiment to stop:
+## A/B Testing Example
 
 ```elixir
-# Grab live metrics (mean/min/max/std for latency & cost, success rate, event counts)
-metrics = CrucibleTelemetry.StreamingMetrics.get_metrics(experiment.id)
-
-# Reset the streaming accumulators
-:ok = CrucibleTelemetry.StreamingMetrics.reset(experiment.id)
-
-# Stop streaming metrics explicitly (cleanup/stop also stops it)
-:ok = CrucibleTelemetry.StreamingMetrics.stop(experiment.id)
-```
-
-Streaming metrics use Welford’s online algorithm for exact mean/variance with constant memory. If the server is not running, `get_metrics/1` will start it automatically.
-
-### Time-Window Queries & Windowed Metrics
-
-Use `CrucibleTelemetry.Store.query_window/3` to pull only the data you need:
-
-```elixir
-# Last 5 minutes
-recent = Store.query_window(experiment.id, {:last, 5, :minutes})
-
-# Last 200 events
-tail = Store.query_window(experiment.id, {:last_n, 200})
-
-# Specific time range with an additional filter
-events = Store.query_window(experiment.id, {:range, t_start, t_end}, fn e -> e.success end)
-```
-
-Compute sliding window rollups with `windowed_metrics/3` (window and step in microseconds):
-
-```elixir
-# 5-minute windows stepping every 1 minute
-windows = Store.windowed_metrics(experiment.id, 5 * 60_000_000, 60_000_000)
-# => [%{window_start: ..., window_end: ..., event_count: 42, mean_latency: 123.4, total_cost: 0.12, ...}, ...]
-```
-
-### Pause and Resume Experiments
-
-You can temporarily pause data collection without tearing down storage:
-
-```elixir
-{:ok, paused} = CrucibleTelemetry.pause_experiment(experiment.id)
-# ... perform maintenance or hold traffic ...
-{:ok, resumed} = CrucibleTelemetry.resume_experiment(experiment.id)
-
-CrucibleTelemetry.is_paused?(experiment.id) # => true/false
-```
-
-Pausing detaches telemetry handlers; resuming reattaches them and keeps your experiment state and data intact.
-
-## Use Cases
-
-### 1. A/B Testing
-
-Compare two approaches side-by-side:
-
-```elixir
-# Control: Single model
+# Control group
 {:ok, control} = CrucibleTelemetry.start_experiment(
   name: "control_single_model",
   condition: "control",
   tags: ["ab_test"]
 )
 
-# Treatment: Ensemble
+# Treatment group
 {:ok, treatment} = CrucibleTelemetry.start_experiment(
   name: "treatment_ensemble",
   condition: "treatment",
@@ -292,211 +277,57 @@ comparison = CrucibleTelemetry.Analysis.compare_experiments([
 ])
 ```
 
-### 2. Performance Benchmarking
-
-Track performance over time:
-
-```elixir
-{:ok, exp} = CrucibleTelemetry.start_experiment(
-  name: "gemini_2_flash_benchmark",
-  tags: ["benchmark", "latency", "2024-12"]
-)
-
-# Run benchmark suite
-Enum.each(benchmark_queries, fn query ->
-  # Make LLM calls - automatically tracked
-end)
-
-{:ok, _} = CrucibleTelemetry.stop_experiment(exp.id)
-
-# Export for historical tracking
-CrucibleTelemetry.export(exp.id, :csv,
-  path: "benchmarks/gemini_2_flash_#{Date.utc_today()}.csv"
-)
-```
-
-### 3. Hypothesis Testing
-
-Test specific hypotheses about your system:
-
-```elixir
-{:ok, exp} = CrucibleTelemetry.start_experiment(
-  name: "ensemble_reliability",
-  hypothesis: "5-model ensemble achieves >99% reliability",
-  condition: "ensemble_5x",
-  tags: ["h1", "reliability"],
-  sample_size: 1000
-)
-
-# ... collect 1000 samples ...
-
-metrics = CrucibleTelemetry.calculate_metrics(exp.id)
-
-# Test hypothesis
-hypothesis_confirmed = metrics.reliability.success_rate > 0.99
-IO.puts("Hypothesis #{if hypothesis_confirmed, do: "CONFIRMED", else: "REJECTED"}")
-IO.puts("Success rate: #{metrics.reliability.success_rate * 100}%")
-```
-
-### 4. Cost Analysis
-
-Track and optimize costs:
-
-```elixir
-{:ok, exp} = CrucibleTelemetry.start_experiment(
-  name: "cost_optimization",
-  tags: ["cost", "optimization"]
-)
-
-# ... run workload ...
-
-metrics = CrucibleTelemetry.calculate_metrics(exp.id)
-
-IO.puts("Total cost: $#{metrics.cost.total}")
-IO.puts("Cost per 1M requests: $#{metrics.cost.cost_per_1m_requests}")
-
-# Identify expensive requests
-expensive_events = CrucibleTelemetry.Store.query(exp.id, %{})
-  |> Enum.filter(&(&1.cost_usd > 0.01))
-  |> Enum.sort_by(&(&1.cost_usd), :desc)
-```
-
 ## API Reference
 
-### TelemetryResearch
+### CrucibleTelemetry
 
-Main module with convenience functions.
+| Function | Description |
+|----------|-------------|
+| `start_experiment/1` | Start a new experiment |
+| `stop_experiment/1` | Stop an experiment |
+| `pause_experiment/1` | Pause data collection |
+| `resume_experiment/1` | Resume data collection |
+| `paused?/1` | Check if experiment is paused |
+| `get_experiment/1` | Get experiment details |
+| `list_experiments/0` | List all experiments |
+| `export/3` | Export data to file |
+| `calculate_metrics/1` | Calculate comprehensive metrics |
 
-- `start_experiment(opts)` - Start a new experiment
-- `stop_experiment(experiment_id)` - Stop an experiment
-- `get_experiment(experiment_id)` - Get experiment details
-- `list_experiments()` - List all experiments
-- `export(experiment_id, format, opts)` - Export data
-- `calculate_metrics(experiment_id)` - Calculate metrics
+### CrucibleTelemetry.Events
 
-### CrucibleTelemetry.Experiment
-
-Experiment lifecycle management.
-
-- `start(opts)` - Start experiment with options
-- `stop(experiment_id)` - Stop experiment
-- `get(experiment_id)` - Get experiment
-- `list()` - List experiments
-- `archive(experiment_id, opts)` - Archive to file/S3
-- `cleanup(experiment_id, opts)` - Clean up resources
+| Function | Description |
+|----------|-------------|
+| `standard_events/0` | All standard telemetry events |
+| `training_events/0` | Training-related events |
+| `deployment_events/0` | Deployment-related events |
+| `framework_events/0` | Framework-related events |
+| `llm_events/0` | LLM-related events |
+| `events_by_category/0` | Events organized by category |
+| `event_info/1` | Get info about a specific event |
 
 ### CrucibleTelemetry.Store
 
-Data storage and querying.
-
-- `get_all(experiment_id)` - Get all events
-- `query(experiment_id, filters)` - Query with filters
-- `insert(experiment_id, event)` - Insert event (internal)
-- `delete_experiment(experiment_id)` - Delete all data
-
-### CrucibleTelemetry.Export
-
-Export to various formats.
-
-- `export(experiment_id, format, opts)` - Export data
-- `export_multiple(experiment_ids, format, opts)` - Export multiple
-
-### CrucibleTelemetry.Analysis
-
-Statistical analysis and metrics.
-
-- `calculate_metrics(experiment_id)` - Calculate all metrics
-- `compare_experiments(experiment_ids)` - Compare experiments
-
-## Examples
-
-See the `examples/` directory for complete examples:
-
-- `basic_usage.exs` - Basic workflow walkthrough
-- `ab_testing.exs` - A/B testing with two experiments
-- `custom_metrics.exs` - Custom event tracking
-
-Run examples with:
-
-```bash
-cd apps/telemetry_research
-mix run examples/basic_usage.exs
-```
-
-## Testing
-
-Run the test suite:
-
-```bash
-cd apps/telemetry_research
-mix test
-```
-
-Run with coverage:
-
-```bash
-mix test --cover
-```
-
-## Architecture
-
-```
-┌─────────────────────────────────────────────────┐
-│              TelemetryResearch                   │
-│                                                  │
-│  ┌────────────┐  ┌─────────┐  ┌──────────────┐ │
-│  │ Experiment │  │ Handler │  │    Store     │ │
-│  │  Manager   │  │ Pipeline│  │     ETS      │ │
-│  └────────────┘  └─────────┘  └──────────────┘ │
-│         │             │              │          │
-│         └─────────────┴──────────────┘          │
-│                       │                         │
-│         ┌─────────────▼─────────────┐           │
-│         │  Export      │  Analysis  │           │
-│         │  CSV/JSON    │  Metrics   │           │
-│         └──────────────┴────────────┘           │
-└─────────────────────────────────────────────────┘
-```
-
-## Telemetry Events
-
-TelemetryResearch listens for these standard events:
-
-### req_llm Events
-
-- `[:req_llm, :request, :start]` - LLM request started
-- `[:req_llm, :request, :stop]` - LLM request completed
-- `[:req_llm, :request, :exception]` - LLM request failed
-
-### Ensemble Events
-
-- `[:ensemble, :prediction, :start]` - Ensemble prediction started
-- `[:ensemble, :prediction, :stop]` - Ensemble prediction completed
-- `[:ensemble, :vote, :completed]` - Voting completed
-
-### Hedging Events
-
-- `[:hedging, :request, :start]` - Hedging request started
-- `[:hedging, :request, :duplicated]` - Request duplicated
-- `[:hedging, :request, :stop]` - Hedging request completed
-
-### Causal Trace Events
-
-- `[:causal_trace, :event, :created]` - Reasoning event created
-
-### Altar Tool Events
-
-- `[:altar, :tool, :start]` - Tool invocation started
-- `[:altar, :tool, :stop]` - Tool invocation completed
+| Function | Description |
+|----------|-------------|
+| `get_all/1` | Get all events |
+| `query/2` | Query with filters |
+| `query_window/3` | Time-window queries |
+| `windowed_metrics/3` | Sliding window metrics |
 
 ## Performance
 
-TelemetryResearch is designed for minimal overhead:
-
 - **Event handling**: <1μs per event (in-memory ETS insert)
-- **Storage**: Up to 1M events in memory (~100-500MB depending on metadata)
+- **Storage**: Up to 1M events in memory (~100-500MB)
 - **Query**: Fast filtering with ETS ordered_set
 - **Export**: Streaming to avoid memory spikes
+- **Streaming metrics**: O(1) space using online algorithms
+
+## Testing
+
+```bash
+mix test
+mix test --cover
+```
 
 ## Roadmap
 
@@ -511,4 +342,4 @@ TelemetryResearch is designed for minimal overhead:
 
 ## License
 
-MIT License - see [LICENSE](https://github.com/North-Shore-AI/crucible_telemetry/blob/main/LICENSE) file for details
+MIT License — see [LICENSE](LICENSE) for details.

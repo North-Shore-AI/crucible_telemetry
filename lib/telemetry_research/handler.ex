@@ -35,9 +35,18 @@ defmodule CrucibleTelemetry.Handler do
 
   @doc """
   Enrich an event with experiment context and computed fields.
+
+  Events are enriched with:
+  - Event identity (ID, name, timestamp)
+  - Experiment context (ID, name, condition, tags)
+  - Original measurements and metadata
+  - Computed fields (latency, cost, success)
+  - Training-specific fields (epoch, batch, loss, accuracy)
+  - Additional metadata (session, user, model, provider)
   """
+  @spec enrich_event([atom()], map(), map(), struct()) :: map()
   def enrich_event(event_name, measurements, metadata, experiment) do
-    %{
+    base_event = %{
       # Event identity
       event_id: generate_event_id(),
       event_name: event_name,
@@ -66,7 +75,49 @@ defmodule CrucibleTelemetry.Handler do
       model: metadata[:model],
       provider: metadata[:provider]
     }
+
+    # Add category-specific enrichment
+    enrich_by_category(base_event, event_name, measurements, metadata)
   end
+
+  # Add training-specific fields for crucible_train events
+  defp enrich_by_category(event, [:crucible_train | _rest], measurements, metadata) do
+    Map.merge(event, %{
+      # Training-specific fields
+      epoch: metadata[:epoch] || measurements[:epoch],
+      batch: metadata[:batch] || measurements[:batch],
+      loss: measurements[:loss],
+      accuracy: measurements[:accuracy],
+      learning_rate: metadata[:learning_rate] || measurements[:learning_rate],
+      gradient_norm: measurements[:gradient_norm],
+      checkpoint_path: metadata[:checkpoint_path]
+    })
+  end
+
+  # Add deployment-specific fields for crucible_deployment events
+  defp enrich_by_category(event, [:crucible_deployment | _rest], measurements, metadata) do
+    Map.merge(event, %{
+      # Deployment-specific fields
+      model_name: metadata[:model_name],
+      model_version: metadata[:model_version],
+      input_size: measurements[:input_size],
+      output_size: measurements[:output_size],
+      batch_size: metadata[:batch_size]
+    })
+  end
+
+  # Add framework-specific fields for crucible_framework events
+  defp enrich_by_category(event, [:crucible_framework | _rest], _measurements, metadata) do
+    Map.merge(event, %{
+      # Framework-specific fields
+      pipeline_id: metadata[:pipeline_id],
+      stage_name: metadata[:stage_name],
+      stage_index: metadata[:stage_index]
+    })
+  end
+
+  # Default: no additional enrichment for other event types
+  defp enrich_by_category(event, _event_name, _measurements, _metadata), do: event
 
   # Private functions
 

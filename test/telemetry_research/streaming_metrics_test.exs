@@ -72,9 +72,6 @@ defmodule CrucibleTelemetry.StreamingMetricsTest do
         StreamingMetrics.update(experiment.id, event)
       end)
 
-      # Small delay to allow updates
-      Process.sleep(10)
-
       metrics = StreamingMetrics.get_metrics(experiment.id)
 
       assert metrics.latency.count == 10
@@ -115,8 +112,6 @@ defmodule CrucibleTelemetry.StreamingMetricsTest do
 
         StreamingMetrics.update(experiment.id, event)
       end)
-
-      Process.sleep(10)
 
       metrics = StreamingMetrics.get_metrics(experiment.id)
 
@@ -187,9 +182,6 @@ defmodule CrucibleTelemetry.StreamingMetricsTest do
       assert Process.alive?(pid)
 
       :ok = StreamingMetrics.stop(experiment.id)
-
-      # Small delay for process to stop
-      Process.sleep(10)
 
       refute Process.alive?(pid)
     end

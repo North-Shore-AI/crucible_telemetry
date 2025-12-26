@@ -191,7 +191,7 @@ defmodule CrucibleTelemetry.Analysis do
 
   # Helper functions
 
-  defp time_range(events) when length(events) == 0 do
+  defp time_range([]) do
     %{start: nil, end: nil}
   end
 
@@ -204,7 +204,11 @@ defmodule CrucibleTelemetry.Analysis do
     }
   end
 
-  defp experiment_duration(events) when length(events) < 2 do
+  defp experiment_duration([]) do
+    0
+  end
+
+  defp experiment_duration([_single]) do
     0
   end
 

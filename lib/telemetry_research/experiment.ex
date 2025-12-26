@@ -40,7 +40,7 @@ defmodule CrucibleTelemetry.Experiment do
           pause_count: non_neg_integer()
         }
 
-  alias CrucibleTelemetry.{Store, Handler}
+  alias CrucibleTelemetry.{Events, Handler, Store}
   alias CrucibleTelemetry.StreamingMetrics
 
   @doc """
@@ -215,11 +215,11 @@ defmodule CrucibleTelemetry.Experiment do
 
   ## Examples
 
-      if Experiment.is_paused?(experiment_id) do
+      if Experiment.paused?(experiment_id) do
         IO.puts("Experiment is paused")
       end
   """
-  def is_paused?(experiment_id) do
+  def paused?(experiment_id) do
     case get(experiment_id) do
       {:ok, experiment} -> experiment.status == :paused
       {:error, _} -> false
@@ -293,20 +293,8 @@ defmodule CrucibleTelemetry.Experiment do
   # Private functions
 
   defp attach_handlers(experiment) do
-    events = [
-      [:req_llm, :request, :start],
-      [:req_llm, :request, :stop],
-      [:req_llm, :request, :exception],
-      [:ensemble, :prediction, :start],
-      [:ensemble, :prediction, :stop],
-      [:ensemble, :vote, :completed],
-      [:hedging, :request, :start],
-      [:hedging, :request, :duplicated],
-      [:hedging, :request, :stop],
-      [:causal_trace, :event, :created],
-      [:altar, :tool, :start],
-      [:altar, :tool, :stop]
-    ]
+    # Use centralized event registry for all standard events
+    events = Events.standard_events()
 
     :telemetry.attach_many(
       handler_id(experiment),

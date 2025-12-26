@@ -24,9 +24,6 @@ defmodule CrucibleTelemetry.HandlerTest do
 
       :ok = Handler.handle_event(event_name, measurements, metadata, config)
 
-      # Give a moment for async processing
-      Process.sleep(10)
-
       events = Store.get_all(experiment.id)
       assert length(events) == 1
 
@@ -43,7 +40,6 @@ defmodule CrucibleTelemetry.HandlerTest do
       config = %{experiment: experiment}
 
       :ok = Handler.handle_event(event_name, measurements, metadata, config)
-      Process.sleep(10)
 
       events = Store.get_all(experiment.id)
       event = List.first(events)
@@ -61,7 +57,6 @@ defmodule CrucibleTelemetry.HandlerTest do
       config = %{experiment: experiment}
 
       :ok = Handler.handle_event(event_name, measurements, metadata, config)
-      Process.sleep(10)
 
       events = Store.get_all(experiment.id)
       event = List.first(events)
@@ -77,8 +72,6 @@ defmodule CrucibleTelemetry.HandlerTest do
 
       # Failure case
       Handler.handle_event([:test, :failure], %{}, %{error: "timeout"}, config)
-
-      Process.sleep(10)
 
       events = Store.get_all(experiment.id)
       assert length(events) == 2

@@ -133,38 +133,38 @@ defmodule CrucibleTelemetry.PauseResumeTest do
     end
   end
 
-  describe "is_paused?/1" do
+  describe "paused?/1" do
     test "returns false for running experiment" do
-      {:ok, experiment} = Experiment.start(name: "is_paused_test")
+      {:ok, experiment} = Experiment.start(name: "paused_test")
 
-      refute Experiment.is_paused?(experiment.id)
+      refute Experiment.paused?(experiment.id)
 
       # Cleanup
       Experiment.cleanup(experiment.id)
     end
 
     test "returns true for paused experiment" do
-      {:ok, experiment} = Experiment.start(name: "is_paused_true_test")
+      {:ok, experiment} = Experiment.start(name: "paused_true_test")
       {:ok, _paused} = Experiment.pause(experiment.id)
 
-      assert Experiment.is_paused?(experiment.id)
+      assert Experiment.paused?(experiment.id)
 
       # Cleanup
       Experiment.cleanup(experiment.id)
     end
 
     test "returns false for stopped experiment" do
-      {:ok, experiment} = Experiment.start(name: "is_paused_stopped_test")
+      {:ok, experiment} = Experiment.start(name: "paused_stopped_test")
       {:ok, _stopped} = Experiment.stop(experiment.id)
 
-      refute Experiment.is_paused?(experiment.id)
+      refute Experiment.paused?(experiment.id)
 
       # Cleanup
       Experiment.cleanup(experiment.id)
     end
 
     test "returns false for non-existent experiment" do
-      refute Experiment.is_paused?("nonexistent")
+      refute Experiment.paused?("nonexistent")
     end
   end
 end

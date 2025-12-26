@@ -132,5 +132,5 @@ defmodule CrucibleTelemetry do
 
   Returns `true` if paused, `false` otherwise.
   """
-  defdelegate is_paused?(experiment_id), to: Experiment
+  defdelegate paused?(experiment_id), to: Experiment
 end

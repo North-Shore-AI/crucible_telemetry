@@ -24,25 +24,25 @@ defmodule CrucibleTelemetry.Export.JSONL do
     if Enum.empty?(events) do
       {:error, :no_data}
     else
-      # Write JSON Lines
-      file = File.open!(path, [:write])
-
-      Enum.each(events, fn event ->
-        json =
-          if pretty do
-            Jason.encode!(event, pretty: true)
-          else
-            Jason.encode!(event)
-          end
-
-        IO.puts(file, json)
-      end)
-
-      File.close(file)
-
-      {:ok, path}
+      write_jsonl_file(path, events, pretty)
     end
   end
+
+  defp write_jsonl_file(path, events, pretty) do
+    file = File.open!(path, [:write])
+
+    Enum.each(events, fn event ->
+      json = encode_event(event, pretty)
+      IO.puts(file, json)
+    end)
+
+    File.close(file)
+
+    {:ok, path}
+  end
+
+  defp encode_event(event, true), do: Jason.encode!(event, pretty: true)
+  defp encode_event(event, false), do: Jason.encode!(event)
 
   # Private functions
 

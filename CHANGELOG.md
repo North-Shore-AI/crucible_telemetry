@@ -2,6 +2,54 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.0] - 2025-12-25
+
+### Added
+- **Event Registry Module**: New `CrucibleTelemetry.Events` module provides centralized event definitions
+  - `standard_events/0` - Get all standard telemetry events
+  - `training_events/0`, `deployment_events/0`, `framework_events/0`, `llm_events/0` - Category-specific events
+  - `events_by_category/0` - Events organized by category map
+  - `event_info/1` - Get category and description for any event
+- **Training Events (crucible_train)**: Full support for ML training job telemetry
+  - `[:crucible_train, :training, :start|stop]` - Training job lifecycle
+  - `[:crucible_train, :epoch, :start|stop]` - Epoch progress with metrics
+  - `[:crucible_train, :batch, :stop]` - Batch completion with loss
+  - `[:crucible_train, :checkpoint, :saved]` - Checkpoint persistence
+  - Automatic enrichment with epoch, batch, loss, accuracy, learning_rate, gradient_norm
+- **Deployment Events (crucible_deployment)**: Model inference telemetry
+  - `[:crucible_deployment, :inference, :start|stop|exception]` - Inference lifecycle
+  - Automatic enrichment with model_name, model_version, input_size, output_size, batch_size
+- **Framework Events (crucible_framework)**: Pipeline execution telemetry
+  - `[:crucible_framework, :pipeline, :start|stop]` - Pipeline lifecycle
+  - `[:crucible_framework, :stage, :start|stop]` - Stage execution
+  - Automatic enrichment with pipeline_id, stage_name, stage_index
+- **Category-Specific Handler Enrichment**: Events are automatically enriched based on their category
+- **Comprehensive Documentation**: Added implementation guides in `docs/20251225/`
+  - `current_state.md` - Full architecture documentation
+  - `gaps.md` - Gap analysis for future improvements
+  - `implementation_prompt.md` - Implementation guide for contributors
+
+### Changed
+- Renamed `is_paused?/1` to `paused?/1` for Elixir naming conventions
+- Experiment now uses centralized event registry instead of hardcoded event list
+- Updated `crucible_ir` dependency from `~> 0.1.1` to `~> 0.2.0`
+- Handler `enrich_event/4` now has proper @spec type specification
+- Refactored CSV and JSONL exporters for better code organization
+
+### Fixed
+- Fixed `time_range/1` pattern matching for empty event list
+- Fixed `experiment_duration/1` to handle single-event and empty lists correctly
+- Improved code quality based on Credo recommendations
+
+### Dependencies
+- Added `credo` (~> 1.7) for code quality analysis
+- Updated `crucible_ir` to 0.2.0
+
+### Documentation
+- Updated README with Event Registry and Training Integration sections
+- Added comprehensive telemetry event documentation organized by category
+- New professional SVG logo with modern data visualization theme
+
 ## [0.2.1] - 2025-11-26
 
 ### Added

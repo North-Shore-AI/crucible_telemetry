@@ -31,23 +31,26 @@ defmodule CrucibleTelemetry.Export.CSV do
     if Enum.empty?(rows) do
       {:error, :no_data}
     else
-      # Write CSV
-      file = File.open!(path, [:write, :utf8])
-
-      # Write header
-      headers = rows |> List.first() |> Map.keys() |> Enum.sort()
-      write_csv_row(file, headers)
-
-      # Write data rows
-      Enum.each(rows, fn row ->
-        values = Enum.map(headers, fn header -> Map.get(row, header) end)
-        write_csv_row(file, values)
-      end)
-
-      File.close(file)
-
-      {:ok, path}
+      write_csv_file(path, rows)
     end
+  end
+
+  defp write_csv_file(path, rows) do
+    file = File.open!(path, [:write, :utf8])
+
+    # Write header
+    headers = rows |> List.first() |> Map.keys() |> Enum.sort()
+    write_csv_row(file, headers)
+
+    # Write data rows
+    Enum.each(rows, fn row ->
+      values = Enum.map(headers, fn header -> Map.get(row, header) end)
+      write_csv_row(file, values)
+    end)
+
+    File.close(file)
+
+    {:ok, path}
   end
 
   # Private functions
@@ -128,10 +131,7 @@ defmodule CrucibleTelemetry.Export.CSV do
   defp format_datetime(_), do: nil
 
   defp write_csv_row(file, values) do
-    row =
-      values
-      |> Enum.map(&csv_escape/1)
-      |> Enum.join(",")
+    row = Enum.map_join(values, ",", &csv_escape/1)
 
     IO.puts(file, row)
   end

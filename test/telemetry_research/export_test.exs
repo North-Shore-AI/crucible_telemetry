@@ -1,7 +1,7 @@
 defmodule CrucibleTelemetry.ExportTest do
   use ExUnit.Case, async: false
 
-  alias CrucibleTelemetry.{Experiment, Store, Export}
+  alias CrucibleTelemetry.{Experiment, Export, Store}
 
   setup do
     :ets.delete_all_objects(:crucible_telemetry_experiments)
