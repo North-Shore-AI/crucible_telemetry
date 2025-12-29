@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.0] - 2025-12-28
+
+### Added
+- **MetricsStore Port**: New `CrucibleTelemetry.Ports.MetricsStore` behaviour for training metrics storage
+  - `record/5` - Record a metric value at a step with optional metadata
+  - `flush/2` - Ensure all buffered metrics are persisted
+  - `read/2` - Read all metrics for a training run
+  - Facade functions for easy adapter invocation via `{module, opts}` tuples
+- **JSONLMetrics Adapter**: New `CrucibleTelemetry.Adapters.JSONLMetrics` for file-based metrics storage
+  - Writes metrics as newline-delimited JSON for easy parsing
+  - Compatible with Python, pandas, and other analysis tools
+  - Each entry includes: run_id, metric name, value, step, timestamp, metadata
+  - Immediate writes (no buffering) for data safety
+  - Filter reads by run_id for multi-run files
+
+### Changed
+- Updated `crucible_ir` dependency from `~> 0.2.0` to `~> 0.2.1`
+
+### Documentation
+- Added comprehensive documentation for MetricsStore port and JSONLMetrics adapter
+
 ## [0.3.0] - 2025-12-25
 
 ### Added

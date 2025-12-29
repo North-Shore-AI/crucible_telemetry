@@ -20,6 +20,7 @@ CrucibleTelemetry provides specialized observability for rigorous scientific exp
 - **Centralized Event Registry** — Programmatic access to all telemetry event definitions
 - **Rich Metadata Enrichment** — Automatic context, timestamps, and custom tags
 - **ML Training Support** — Track epochs, batches, checkpoints, and training metrics
+- **MetricsStore Port** — Pluggable adapter system for persisting training metrics
 - **Inference Monitoring** — Model deployment and inference telemetry
 - **Pipeline Tracking** — Framework stage execution observability
 - **Streaming Metrics** — Real-time latency/cost/reliability stats with O(1) memory
@@ -32,7 +33,7 @@ CrucibleTelemetry provides specialized observability for rigorous scientific exp
 ```elixir
 def deps do
   [
-    {:crucible_telemetry, "~> 0.3.0"}
+    {:crucible_telemetry, "~> 0.4.0"}
   ]
 end
 ```
@@ -163,6 +164,65 @@ defmodule MyTrainer do
       %{duration: total_duration},
       %{final_loss: final_loss}
     )
+  end
+end
+```
+
+## MetricsStore Port
+
+The MetricsStore port provides a pluggable adapter system for persisting training metrics to various backends.
+
+### Basic Usage
+
+```elixir
+alias CrucibleTelemetry.Ports.MetricsStore
+alias CrucibleTelemetry.Adapters.JSONLMetrics
+
+# Create an adapter reference
+adapter = {JSONLMetrics, [path: "/tmp/training/metrics.jsonl"]}
+
+# Record metrics during training
+MetricsStore.record(adapter, "run_123", :loss, 2.5, step: 0)
+MetricsStore.record(adapter, "run_123", :loss, 1.8, step: 100)
+MetricsStore.record(adapter, "run_123", :lr, 0.001, step: 100, metadata: %{epoch: 1})
+
+# Flush any buffered data
+MetricsStore.flush(adapter, "run_123")
+
+# Read metrics back
+{:ok, entries} = MetricsStore.read(adapter, "run_123")
+```
+
+### JSONLMetrics Adapter
+
+The built-in JSONL adapter writes metrics as newline-delimited JSON:
+
+```json
+{"run_id":"run_123","metric":"loss","value":2.5,"step":0,"timestamp":"2025-12-28T10:30:00Z","metadata":{}}
+{"run_id":"run_123","metric":"loss","value":1.8,"step":100,"timestamp":"2025-12-28T10:31:00Z","metadata":{}}
+```
+
+### Custom Adapters
+
+Implement the `CrucibleTelemetry.Ports.MetricsStore` behaviour:
+
+```elixir
+defmodule MyApp.Adapters.PostgresMetrics do
+  @behaviour CrucibleTelemetry.Ports.MetricsStore
+
+  @impl true
+  def record(opts, run_id, metric_name, value, record_opts) do
+    # Insert into database
+    :ok
+  end
+
+  @impl true
+  def flush(opts, run_id), do: :ok
+
+  @impl true
+  def read(opts, run_id) do
+    # Query database
+    {:ok, entries}
   end
 end
 ```
@@ -313,6 +373,14 @@ comparison = CrucibleTelemetry.Analysis.compare_experiments([
 | `query/2` | Query with filters |
 | `query_window/3` | Time-window queries |
 | `windowed_metrics/3` | Sliding window metrics |
+
+### CrucibleTelemetry.Ports.MetricsStore
+
+| Function | Description |
+|----------|-------------|
+| `record/5` | Record a metric value at a step |
+| `flush/2` | Flush buffered metrics to storage |
+| `read/2` | Read all metrics for a run |
 
 ## Performance
 
