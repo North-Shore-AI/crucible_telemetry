@@ -15,10 +15,7 @@ defmodule CrucibleTelemetry.Application do
       {:read_concurrency, true}
     ])
 
-    children = [
-      # Starts a worker by calling: CrucibleTelemetry.Worker.start_link(arg)
-      # {CrucibleTelemetry.Worker, arg}
-    ]
+    children = []
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options

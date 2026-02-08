@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.0] - 2026-02-08
+
+### Changed
+- Upgraded `ex_doc` from `~> 0.38` to `~> 0.40.0`
+- Cleaned up application supervision tree (removed placeholder comments)
+
+### Documentation
+- Added `examples/README.md` with example index
+
 ## [0.4.0] - 2025-12-28
 
 ### Added

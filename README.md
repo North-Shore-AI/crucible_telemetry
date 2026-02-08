@@ -33,7 +33,7 @@ CrucibleTelemetry provides specialized observability for rigorous scientific exp
 ```elixir
 def deps do
   [
-    {:crucible_telemetry, "~> 0.4.0"}
+    {:crucible_telemetry, "~> 0.5.0"}
   ]
 end
 ```

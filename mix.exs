@@ -1,7 +1,7 @@
 defmodule CrucibleTelemetry.MixProject do
   use Mix.Project
 
-  @version "0.4.0"
+  @version "0.5.0"
   @source_url "https://github.com/North-Shore-AI/crucible_telemetry"
 
   def project do
@@ -39,7 +39,7 @@ defmodule CrucibleTelemetry.MixProject do
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
 
       # Documentation
-      {:ex_doc, "~> 0.38", only: :dev, runtime: false}
+      {:ex_doc, "~> 0.40.0", only: :dev, runtime: false}
     ]
   end
 
